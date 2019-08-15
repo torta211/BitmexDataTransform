@@ -34,14 +34,14 @@ struct trade_event_row
 int main()
 {
 	//--------------TESTING BACK TRANSFORMED DATA---------------------------------------------------------------------------------------------------------------------------
-	bool testreadmode = 1;
+	bool testreadmode = 0;
 	if (testreadmode)
 	{
 		std::ifstream ti;
-		ti.open("C:\\EreBere\\Project\\Anaconda\\BTC_TRADE\\trade_201701.bin", std::ios::in | std::ios::binary);
+		ti.open("C:\\EreBere\\Project\\Anaconda\\BTC_QUOTE\\quote_201901_201907.bin", std::ios::in | std::ios::binary);
 
-		trade_event_row testin;
-		size_t num_bytes_to_read = 20;
+		quote_event_row testin;
+		size_t num_bytes_to_read = 24;
 
 		unsigned long long one_day_in_microsecs = 86400000000ULL;
 		int last_day = 0;
@@ -57,6 +57,7 @@ int main()
 			{
 				last_day = curr_day;
 				std::cout << cnt << std::endl;
+				std::cout << testin.timestamp << " | " << testin.asksize << " | " << testin.askprice << " | " << testin.bidsize << " | " << testin.bidprice << std::endl;
 				cnt = 0;
 			}
 		}
@@ -67,7 +68,7 @@ int main()
 	//----------ACTUAL CONVERTER PROGRAM------------------------------------------------------------------------------------------------------------------------------------
 
 	//path to the directory where bitmex public data is
-	std::string dir_path = "C:\\EreBere\\Project\\Anaconda\\BTC_TRADE\\201701";
+	std::string dir_path = "C:\\EreBere\\Project\\Anaconda\\BTC_TRADE\\201901_201907";
 	//variables for input handling
 	std::fstream current_file;
 	std::string current_row;
@@ -88,7 +89,7 @@ int main()
 	bool reached_xbtusd;
 
 	//output file stream
-	std::ofstream output_file("C:\\EreBere\\Project\\Anaconda\\BTC_TRADE\\trade_201701.bin", std::ios::out | std::ios::binary);
+	std::ofstream output_file("C:\\EreBere\\Project\\Anaconda\\BTC_TRADE\\trade_201708_201712.bin", std::ios::out | std::ios::binary);
 	if (!output_file.is_open()) { return false; }
 	//fields in their output form
 	unsigned long long timestamp; //at least 64 bits, 2^64 >> 10^6 * 3600 * 24 * 365 * 3 (which is 3 years in microseconds)
@@ -118,21 +119,22 @@ int main()
 			//1: the timestamp and symbol fields have always the same length
 			//2: XBTUSD symbol makes a continuos interval inside the file !!THIS DOES NOT HOLD TRUE FOR 2018!!
 
+			if (current_row.empty()) { continue; }
 			symbol_raw = current_row.substr(30, 6);
 
 			//arrived to a different symbol
-			if (symbol_raw != last_symbol)
-			{
-				std::cout << symbol_raw << std::endl;
-				last_symbol = symbol_raw;
+			//if (symbol_raw != last_symbol)
+			//{
+			//	std::cout << symbol_raw << std::endl;
+			//	last_symbol = symbol_raw;
 
-				if (reached_xbtusd) { break; } //break from while, finish file
+			//	if (reached_xbtusd) { break; } //break from while, finish file
 
-				if (symbol_raw == "XBTUSD")	{ reached_xbtusd = true; }
-			}
+			//	if (symbol_raw == "XBTUSD")	{ reached_xbtusd = true; }
+			//}
 
 			//we are reading XBTUSD part
-			if (reached_xbtusd)
+			if (symbol_raw == "XBTUSD")
 			{
 				//we extract time_raw, and cut the line after symbol field
 				time_raw = current_row.substr(0, 29); //string (e.g. 2017-01-03D00:24:18.563095000)
